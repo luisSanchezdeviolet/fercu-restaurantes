@@ -1,0 +1,56 @@
+# =========================
+# MySQL / MariaDB (nunca versionar)
+# =========================
+data/
+*.ibd
+*.dblwr
+binlog.*
+*.sock
+*.cnf
+ibdata1
+ibtmp1
+undo_*
+*.sql
+*.dump
+*.sql.gz
+*.sql.bak
+
+# =========================
+# Certs/keys
+# =========================
+*.pem
+*.key
+*.crt
+
+# =========================
+# Logs / temporales
+# =========================
+*.log
+*.tmp
+*.bak
+*.swp
+*~
+
+# =========================
+# Variables de entorno (contienen claves)
+# =========================
+.env
+.env.*
+
+# =========================
+# Dependencias (composer)
+# =========================
+/vendor/
+
+# =========================
+# IDE / OS
+# =========================
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# =========================
+# (Opcional) uploads/cache si aplica
+# uploads/*
+# storage/*

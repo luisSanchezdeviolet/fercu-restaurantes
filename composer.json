@@ -1,0 +1,15 @@
+{
+    "name": "fercu/restaurantes",
+    "description": "Sistema de gestión de restaurantes con suscripciones SaaS",
+    "type": "project",
+    "require": {
+        "php": ">=7.4",
+        "stripe/stripe-php": "^10.0",
+        "sendgrid/sendgrid": "^8.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    }
+}
