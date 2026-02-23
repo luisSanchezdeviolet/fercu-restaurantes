@@ -62,30 +62,33 @@ Verás 2 claves en modo **test**:
 
 ## 3. **CONFIGURAR LAS CLAVES EN EL SISTEMA**
 
-### Archivo: `/var/www/restaurantes/config/stripe.php`
+**Nota:** Las claves se configuran en el archivo `.env` (copia `.env.example` a `.env`).
 
-Edita el archivo y reemplaza las claves:
+### Archivo: `/var/www/restaurantes/.env`
 
-```php
-// Claves de Stripe - MODO TEST
-define('STRIPE_TEST_PUBLIC_KEY', 'pk_test_TU_CLAVE_AQUI');
-define('STRIPE_TEST_SECRET_KEY', 'sk_test_TU_CLAVE_AQUI');
+Agrega o edita las variables:
 
-// Claves de Stripe - MODO LIVE (PRODUCCIÓN)
-define('STRIPE_LIVE_PUBLIC_KEY', 'pk_live_TU_CLAVE_AQUI');
-define('STRIPE_LIVE_SECRET_KEY', 'sk_live_TU_CLAVE_AQUI');
+```
+STRIPE_MODE=test
+STRIPE_TEST_PUBLIC_KEY=pk_test_TU_CLAVE_AQUI
+STRIPE_TEST_SECRET_KEY=sk_test_TU_CLAVE_AQUI
+STRIPE_TEST_WEBHOOK_SECRET=whsec_TU_SECRET_TEST
+
+STRIPE_LIVE_PUBLIC_KEY=pk_live_TU_CLAVE_AQUI
+STRIPE_LIVE_SECRET_KEY=sk_live_TU_CLAVE_AQUI
+STRIPE_LIVE_WEBHOOK_SECRET=whsec_TU_SECRET_LIVE
 ```
 
 ### Cambiar entre TEST y LIVE
 
 Por defecto está en **TEST**:
-```php
-define('STRIPE_MODE', 'test'); // Modo de pruebas
+```
+STRIPE_MODE=test
 ```
 
 Para producción:
-```php
-define('STRIPE_MODE', 'live'); // Modo producción
+```
+STRIPE_MODE=live
 ```
 
 ---
@@ -118,14 +121,11 @@ Los webhooks permiten que Stripe notifique a tu servidor cuando ocurren eventos 
 
 Después de crear el webhook, verás un **Signing secret** (empieza con `whsec_...`).
 
-Cópialo y agrégalo a `/var/www/restaurantes/config/stripe.php`:
+Cópialo y agrégalo a tu archivo `.env`:
 
-```php
-// Para modo TEST
-define('STRIPE_TEST_WEBHOOK_SECRET', 'whsec_TU_SECRET_TEST');
-
-// Para modo LIVE
-define('STRIPE_LIVE_WEBHOOK_SECRET', 'whsec_TU_SECRET_LIVE');
+```
+STRIPE_TEST_WEBHOOK_SECRET=whsec_TU_SECRET_TEST
+STRIPE_LIVE_WEBHOOK_SECRET=whsec_TU_SECRET_LIVE
 ```
 
 ### Paso 4.3: Probar el webhook
@@ -195,9 +195,9 @@ Stripe proporciona tarjetas de prueba para diferentes escenarios:
 
 3. Configura el webhook de LIVE (paso 4.1) con la misma URL
 
-4. En `/var/www/restaurantes/config/stripe.php`:
-   ```php
-   define('STRIPE_MODE', 'live'); // Cambiar a live
+4. En tu archivo `.env`:
+   ```
+   STRIPE_MODE=live
    ```
 
 5. Limpia la caché:
@@ -262,7 +262,7 @@ UPDATE plans SET stripe_price_id = 'price_XXXXX' WHERE id = 5; -- Professional A
 **Causa:** El Webhook Secret no coincide.
 
 **Solución:**
-1. Verifica que el `STRIPE_WEBHOOK_SECRET` en `config/stripe.php` sea correcto
+1. Verifica que el `STRIPE_WEBHOOK_SECRET` en tu `.env` sea correcto
 2. Asegúrate de estar usando el secret del endpoint correcto
 3. Revisa los logs en `/var/www/restaurantes/logs/stripe-webhook.log`
 
@@ -290,7 +290,7 @@ UPDATE plans SET stripe_price_id = 'price_XXXXX' WHERE id = 5; -- Professional A
 **Solución:**
 1. Abre la consola del navegador (F12)
 2. Verifica que no haya errores de JavaScript
-3. Asegúrate de que `STRIPE_PUBLIC_KEY` esté definida correctamente
+3. Asegúrate de que `STRIPE_TEST_PUBLIC_KEY` o `STRIPE_LIVE_PUBLIC_KEY` esté en tu `.env`
 
 ---
 

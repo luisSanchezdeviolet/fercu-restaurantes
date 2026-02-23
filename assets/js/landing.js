@@ -103,7 +103,7 @@ document.addEventListener("DOMContentLoaded", function () {
       Swal.fire({
         icon: 'info',
         title: 'Prueba gratuita ya utilizada',
-        html: 'Este correo ya ha usado la prueba gratuita anteriormente.<br><br>Te invitamos a conocer nuestros planes de pago:<br><strong>Plan Básico: $399/mes</strong><br><strong>Plan Professional: $899/mes</strong>',
+        html: 'Este correo ya ha usado la prueba gratuita anteriormente.<br><br>Te invitamos a conocer nuestros planes de pago:<br><strong>Plan Básico: $129/mes</strong><br><strong>Plan Professional: $249/mes</strong>',
         confirmButtonText: 'Ver Planes',
         showCancelButton: true,
         cancelButtonText: 'Cerrar'
@@ -223,12 +223,12 @@ document.addEventListener("DOMContentLoaded", function () {
   
   const descripciones = {
     basico: {
-      mensual: "Plan Básico ideal para pequeños restaurantes por $399 MXN al mes: hasta 10 mesas, hasta 3 usuarios, órdenes ilimitadas, gestión de inventario, reportes básicos y soporte por email.",
-      anual: "Plan Básico anual por $3,990 MXN con 17% de descuento: todo lo del plan mensual más ahorras $798 MXN (2 meses gratis). Ideal para empezar."
+      mensual: "Plan Básico ideal para pequeños restaurantes por $129 MXN al mes: hasta 10 mesas, hasta 3 usuarios, órdenes ilimitadas, gestión de inventario, reportes básicos y soporte por email.",
+      anual: "Plan Básico anual por $1,190 MXN con 23% de descuento: todo lo del plan mensual más ahorras. Ideal para empezar."
     },
     professional: {
-      mensual: "Plan Professional por $899 MXN al mes: mesas ilimitadas, usuarios ilimitados, multi-sucursales, reportes avanzados, acceso a API, integraciones y soporte prioritario 24/7.",
-      anual: "Professional anual por $8,630 MXN con 20% de descuento: todo lo del plan mensual más ahorras $2,158 MXN (2.4 meses gratis). Perfecto para restaurantes establecidos."
+      mensual: "Plan Professional por $249 MXN al mes: mesas ilimitadas, usuarios ilimitados, multi-sucursales, reportes avanzados, acceso a API, integraciones y soporte prioritario 24/7.",
+      anual: "Professional anual por $2,390 MXN con 20% de descuento: todo lo del plan mensual. Perfecto para restaurantes establecidos."
     }
   };
   

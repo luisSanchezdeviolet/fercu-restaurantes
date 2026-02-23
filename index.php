@@ -301,7 +301,7 @@
             <div class="nuestros-planes">
                 <div class="plan inicio">
                     <h3>Básico</h3>
-                    <p class="precio" data-mensual="$399.00 Mes" data-anual="$3,990.00 Año">$399.00 Mes</p>
+                    <p class="precio" data-mensual="$129.00 Mes" data-anual="$1,190.00 Año">$129.00 Mes</p>
                     <ul class="listado">
                         <li>Hasta 10 mesas</li>
                         <li>Hasta 3 usuarios</li>
@@ -313,16 +313,16 @@
                     </ul>
                     <button class="boton-plan" 
                     data-tipo="basico" 
-                    data-mensual="399" 
-                    data-anual="3990"
+                    data-mensual="129" 
+                    data-anual="1190"
                     data-plan-id-mensual="2"
                     data-plan-id-anual="3"
-                    data-ahorro="17%">Inscribirme</button>
+                    data-ahorro="23%">Inscribirme</button>
                 </div>
 
                 <div class="plan pro">
                     <h3>Professional</h3>
-                    <p class="precio" data-mensual="$899.00 Mes" data-anual="$8,630.00 Año">$899.00 Mes</p>
+                    <p class="precio" data-mensual="$249.00 Mes" data-anual="$2,390.00 Año">$249.00 Mes</p>
                     <ul class="listado">
                         <li>Mesas ilimitadas</li>
                         <li>Usuarios ilimitados</li>
@@ -335,8 +335,8 @@
                     </ul>
                     <button class="boton-plan" 
                     data-tipo="professional" 
-                    data-mensual="899" 
-                    data-anual="8630"
+                    data-mensual="249" 
+                    data-anual="2390"
                     data-plan-id-mensual="4"
                     data-plan-id-anual="5"
                     data-ahorro="20%">Inscribirme</button>
