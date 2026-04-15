@@ -2,10 +2,12 @@
 class CajaController
 {
     private $conn;
+    private $configuracion_id;
 
-    public function __construct($db)
+    public function __construct($db, $configuracion_id = null)
     {
         $this->conn = $db;
+        $this->configuracion_id = $configuracion_id !== null ? (int)$configuracion_id : null;
     }
 
     public function findAll()
@@ -14,9 +16,11 @@ class CajaController
             $query = "SELECT c.*, 
                       (SELECT COUNT(*) FROM caja_productos cp WHERE cp.caja_id = c.id) as total_productos
                       FROM cajas c 
+                      WHERE c.configuracion_id = :configuracion_id
                       ORDER BY c.created_at DESC";
 
             $stmt = $this->conn->prepare($query);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $stmt->execute();
 
             $cajas = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -38,9 +42,10 @@ class CajaController
     {
         try {
 
-            $query = "SELECT * FROM cajas WHERE id = :id";
+            $query = "SELECT * FROM cajas WHERE id = :id AND configuracion_id = :configuracion_id";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':id', $id);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $stmt->execute();
 
             $caja = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -57,10 +62,12 @@ class CajaController
                               FROM caja_productos cp
                               INNER JOIN productos p ON cp.producto_id = p.id
                               WHERE cp.caja_id = :caja_id
+                              AND p.configuracion_id = :configuracion_id
                               ORDER BY p.nombre";
 
             $stmtProductos = $this->conn->prepare($queryProductos);
             $stmtProductos->bindParam(':caja_id', $id);
+            $stmtProductos->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $stmtProductos->execute();
 
             $productos = $stmtProductos->fetchAll(PDO::FETCH_ASSOC);
@@ -85,11 +92,13 @@ class CajaController
             $query = "SELECT c.*, 
                       (SELECT COUNT(*) FROM caja_productos cp WHERE cp.caja_id = c.id) as total_productos
                       FROM cajas c 
-                      WHERE DATE(c.fecha_cierre) = :date 
+                      WHERE DATE(c.fecha_cierre) = :date
+                      AND c.configuracion_id = :configuracion_id
                       ORDER BY c.created_at DESC";
 
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':date', $date);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $stmt->execute();
 
             $cajas = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -115,9 +124,11 @@ class CajaController
 
             $queryOrdenes = "SELECT o.id, o.total, o.metodo_pago 
                            FROM ordenes o 
-                           WHERE o.estado IN ('Pendiente', 'Listo para servir', 'Entregado')";
+                           WHERE o.estado IN ('Pendiente', 'Listo para servir', 'Entregado')
+                           AND o.configuracion_id = :configuracion_id";
 
             $stmtOrdenes = $this->conn->prepare($queryOrdenes);
+            $stmtOrdenes->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $stmtOrdenes->execute();
             $ordenes = $stmtOrdenes->fetchAll(PDO::FETCH_ASSOC);
 
@@ -144,13 +155,14 @@ class CajaController
             $productosVendidos = $stmtProductos->fetchAll(PDO::FETCH_ASSOC);
 
 
-            $queryInsertCaja = "INSERT INTO cajas (encargado, fecha_cierre, total, estado_inventario) 
-                    VALUES (:encargado, CURDATE(), :total, :estado_inventario)";
+            $queryInsertCaja = "INSERT INTO cajas (encargado, fecha_cierre, total, estado_inventario, configuracion_id) 
+                    VALUES (:encargado, CURDATE(), :total, :estado_inventario, :configuracion_id)";
             $stmtInsertCaja = $this->conn->prepare($queryInsertCaja);
             $stmtInsertCaja->bindParam(':encargado', $encargado);
             $stmtInsertCaja->bindParam(':total', $totalCaja);
             $estadoInventario = $updateInventory ? 'Si' : 'No';
             $stmtInsertCaja->bindParam(':estado_inventario', $estadoInventario);
+            $stmtInsertCaja->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $stmtInsertCaja->execute();
 
             $cajaId = $this->conn->lastInsertId();
@@ -183,8 +195,9 @@ class CajaController
             $stmtUpdateOrdenes = $this->conn->prepare($queryUpdateOrdenes);
             $stmtUpdateOrdenes->execute($ordenIds);
 
-            $queryUpdateMesas = "UPDATE mesas SET estado = 'Disponible' WHERE estado IN ('Ocupada', 'Reservada')";
+            $queryUpdateMesas = "UPDATE mesas SET estado = 'Disponible' WHERE estado IN ('Ocupada', 'Reservada') AND configuracion_id = :configuracion_id";
             $stmtUpdateMesas = $this->conn->prepare($queryUpdateMesas);
+            $stmtUpdateMesas->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $stmtUpdateMesas->execute();
 
             $this->conn->commit();
@@ -216,10 +229,12 @@ class CajaController
             $queryIngredientes = "SELECT pi.ingrediente_id, pi.cantidad, i.nombre 
                                 FROM producto_ingredientes pi
                                 INNER JOIN ingredientes i ON pi.ingrediente_id = i.id
-                                WHERE pi.producto_id = :product_id";
+                                WHERE pi.producto_id = :product_id
+                                AND i.configuracion_id = :configuracion_id";
 
             $stmtIngredientes = $this->conn->prepare($queryIngredientes);
             $stmtIngredientes->bindParam(':product_id', $productId);
+            $stmtIngredientes->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $stmtIngredientes->execute();
             $ingredientes = $stmtIngredientes->fetchAll(PDO::FETCH_ASSOC);
 
@@ -231,7 +246,8 @@ class CajaController
                                              ELSE 'Disponible' 
                                          END,
                                          updatedAt = CURRENT_TIMESTAMP
-                                     WHERE id = :ingrediente_id";
+                                     WHERE id = :ingrediente_id
+                                     AND configuracion_id = :configuracion_id";
 
             $stmtUpdateIngrediente = $this->conn->prepare($queryUpdateIngrediente);
 
@@ -240,6 +256,7 @@ class CajaController
 
                 $stmtUpdateIngrediente->bindParam(':cantidad_usar', $cantidadUsar);
                 $stmtUpdateIngrediente->bindParam(':ingrediente_id', $ingrediente['ingrediente_id']);
+                $stmtUpdateIngrediente->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
                 $stmtUpdateIngrediente->execute();
             }
         } catch (Exception $e) {
@@ -255,9 +272,11 @@ class CajaController
                            FROM ordenes o 
                            LEFT JOIN usuarios u ON o.user_id = u.id
                            WHERE o.estado IN ('Pendiente', 'Listo para servir', 'Entregado')
+                           AND o.configuracion_id = :configuracion_id
                            ORDER BY o.created_at DESC";
 
             $stmtOrdenes = $this->conn->prepare($queryOrdenes);
+            $stmtOrdenes->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $stmtOrdenes->execute();
             $ordenes = $stmtOrdenes->fetchAll(PDO::FETCH_ASSOC);
 
@@ -414,8 +433,9 @@ class CajaController
     public function getProductosAntesDeCerrarCaja()
     {
         try {
-            $queryOrdenes = "SELECT id FROM ordenes WHERE estado IN ('Pendiente', 'Listo para servir', 'Entregado')";
+            $queryOrdenes = "SELECT id FROM ordenes WHERE estado IN ('Pendiente', 'Listo para servir', 'Entregado') AND configuracion_id = :configuracion_id";
             $stmtOrdenes = $this->conn->prepare($queryOrdenes);
+            $stmtOrdenes->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $stmtOrdenes->execute();
             $ordenes = $stmtOrdenes->fetchAll(PDO::FETCH_ASSOC);
 

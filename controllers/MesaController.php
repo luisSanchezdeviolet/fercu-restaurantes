@@ -2,17 +2,20 @@
 class MesaController
 {
     private $conn;
+    private $configuracion_id;
 
-    public function __construct($db)
+    public function __construct($db, $configuracion_id = null)
     {
         $this->conn = $db;
+        $this->configuracion_id = $configuracion_id !== null ? (int)$configuracion_id : null;
     }
 
     public function findAll()
     {
         try {
-            $query = "SELECT * FROM mesas ORDER BY numero_mesa ASC";
+            $query = "SELECT * FROM mesas WHERE configuracion_id = :configuracion_id ORDER BY numero_mesa ASC";
             $stmt = $this->conn->prepare($query);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $stmt->execute();
 
             $mesas = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -33,9 +36,10 @@ class MesaController
     public function findById($id)
     {
         try {
-            $query = "SELECT * FROM mesas WHERE id = :id";
+            $query = "SELECT * FROM mesas WHERE id = :id AND configuracion_id = :configuracion_id";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':id', $id);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $stmt->execute();
 
             $mesa = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -81,21 +85,23 @@ class MesaController
             }
 
             // Verificar si el número de mesa ya existe
-            $check = $this->conn->prepare("SELECT COUNT(*) FROM mesas WHERE numero_mesa = :numero_mesa");
+            $check = $this->conn->prepare("SELECT COUNT(*) FROM mesas WHERE numero_mesa = :numero_mesa AND configuracion_id = :configuracion_id");
             $check->bindParam(':numero_mesa', $numero_mesa);
+            $check->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $check->execute();
             if ($check->fetchColumn() > 0) {
                 return ['success' => false, 'message' => 'El número de mesa ya está registrado.'];
             }
 
             $stmt = $this->conn->prepare("
-                INSERT INTO mesas (numero_mesa, asientos, estado, created_at) 
-                VALUES (:numero_mesa, :asientos, :estado, NOW())
+                INSERT INTO mesas (numero_mesa, asientos, estado, configuracion_id, created_at) 
+                VALUES (:numero_mesa, :asientos, :estado, :configuracion_id, NOW())
             ");
 
             $stmt->bindParam(':numero_mesa', $numero_mesa, PDO::PARAM_INT);
             $stmt->bindParam(':asientos', $asientos, PDO::PARAM_INT);
             $stmt->bindParam(':estado', $estado);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
 
             if ($stmt->execute()) {
                 return [
@@ -134,17 +140,19 @@ class MesaController
             $id = (int)$id;
 
             // Verificar si la mesa existe
-            $checkMesa = $this->conn->prepare("SELECT COUNT(*) FROM mesas WHERE id = :id");
+            $checkMesa = $this->conn->prepare("SELECT COUNT(*) FROM mesas WHERE id = :id AND configuracion_id = :configuracion_id");
             $checkMesa->bindParam(':id', $id);
+            $checkMesa->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $checkMesa->execute();
             if ($checkMesa->fetchColumn() === 0) {
                 return ['success' => false, 'message' => 'La mesa no existe.'];
             }
 
             // Verificar si el número de mesa ya existe en otra mesa
-            $checkNumero = $this->conn->prepare("SELECT COUNT(*) FROM mesas WHERE numero_mesa = :numero_mesa AND id != :id");
+            $checkNumero = $this->conn->prepare("SELECT COUNT(*) FROM mesas WHERE numero_mesa = :numero_mesa AND id != :id AND configuracion_id = :configuracion_id");
             $checkNumero->bindParam(':numero_mesa', $numero_mesa);
             $checkNumero->bindParam(':id', $id);
+            $checkNumero->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $checkNumero->execute();
             if ($checkNumero->fetchColumn() > 0) {
                 return ['success' => false, 'message' => 'El número de mesa ya está registrado en otra mesa.'];
@@ -153,13 +161,14 @@ class MesaController
             $stmt = $this->conn->prepare("
                 UPDATE mesas
                 SET numero_mesa = :numero_mesa, asientos = :asientos, estado = :estado
-                WHERE id = :id
+                WHERE id = :id AND configuracion_id = :configuracion_id
             ");
 
             $stmt->bindParam(':numero_mesa', $numero_mesa, PDO::PARAM_INT);
             $stmt->bindParam(':asientos', $asientos, PDO::PARAM_INT);
             $stmt->bindParam(':estado', $estado);
             $stmt->bindParam(':id', $id);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
 
             if ($stmt->execute()) {
                 return ['success' => true, 'message' => 'Mesa actualizada correctamente.'];
@@ -178,8 +187,9 @@ class MesaController
                 return ['success' => false, 'message' => 'ID de la mesa es obligatorio.'];
             }
 
-            $stmt = $this->conn->prepare("DELETE FROM mesas WHERE id = :id");
+            $stmt = $this->conn->prepare("DELETE FROM mesas WHERE id = :id AND configuracion_id = :configuracion_id");
             $stmt->bindParam(':id', $id);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
 
             if ($stmt->execute()) {
                 if ($stmt->rowCount() > 0) {
@@ -203,9 +213,10 @@ class MesaController
                 return ['success' => false, 'message' => 'Estado no válido. Use: Disponible, Ocupada o Reservada.'];
             }
 
-            $query = "SELECT * FROM mesas WHERE estado = :estado ORDER BY numero_mesa ASC";
+            $query = "SELECT * FROM mesas WHERE estado = :estado AND configuracion_id = :configuracion_id ORDER BY numero_mesa ASC";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':estado', $estado);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $stmt->execute();
 
             $mesas = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -226,9 +237,10 @@ class MesaController
     public function findByNumeroMesa($numero_mesa)
     {
         try {
-            $query = "SELECT * FROM mesas WHERE numero_mesa = :numero_mesa";
+            $query = "SELECT * FROM mesas WHERE numero_mesa = :numero_mesa AND configuracion_id = :configuracion_id";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':numero_mesa', $numero_mesa);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $stmt->execute();
 
             $mesa = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -269,18 +281,20 @@ class MesaController
                 return ['success' => false, 'message' => 'ID de la mesa debe ser un número válido mayor a 0.'];
             }
 
-            $query = "SELECT COUNT(*) FROM mesas WHERE id = :id";
+            $query = "SELECT COUNT(*) FROM mesas WHERE id = :id AND configuracion_id = :configuracion_id";
             $check = $this->conn->prepare($query);
             $check->bindParam(':id', $id);
+            $check->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $check->execute();
 
             if ($check->fetchColumn() === 0) {
                 return ['success' => false, 'message' => 'La mesa no existe.'];
             }
 
-            $stmt = $this->conn->prepare("UPDATE mesas SET estado = :estado WHERE id = :id");
+            $stmt = $this->conn->prepare("UPDATE mesas SET estado = :estado WHERE id = :id AND configuracion_id = :configuracion_id");
             $stmt->bindParam(':estado', $estado);
             $stmt->bindParam(':id', $id);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
 
             if ($stmt->execute()) {
                 return ['success' => true, 'message' => 'Estado de la mesa actualizado correctamente.'];
@@ -300,9 +314,10 @@ class MesaController
                 return ['success' => false, 'message' => 'Estado no válido. Use: Disponible, Ocupada o Reservada.'];
             }
 
-            $query = "SELECT * FROM mesas WHERE estado = :estado ORDER BY numero_mesa ASC";
+            $query = "SELECT * FROM mesas WHERE estado = :estado AND configuracion_id = :configuracion_id ORDER BY numero_mesa ASC";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':estado', $estado);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $stmt->execute();
 
             $mesas = $stmt->fetchAll(PDO::FETCH_ASSOC);

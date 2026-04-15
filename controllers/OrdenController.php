@@ -2,10 +2,12 @@
 class OrdenController
 {
     private $conn;
+    private $configuracion_id;
 
-    public function __construct($db)
+    public function __construct($db, $configuracion_id = null)
     {
         $this->conn = $db;
+        $this->configuracion_id = $configuracion_id !== null ? (int)$configuracion_id : null;
     }
 
     public function findAll()
@@ -15,8 +17,10 @@ class OrdenController
                      FROM ordenes o 
                      LEFT JOIN usuarios u ON o.user_id = u.id 
                      LEFT JOIN mesas m ON o.numero_mesa = m.id 
+                     WHERE o.configuracion_id = :configuracion_id
                      ORDER BY o.id DESC";
             $stmt = $this->conn->prepare($query);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $stmt->execute();
 
             $ordenes = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -45,9 +49,10 @@ class OrdenController
                      FROM ordenes o 
                      LEFT JOIN usuarios u ON o.user_id = u.id 
                      LEFT JOIN mesas m ON o.numero_mesa = m.id 
-                     WHERE o.id = :id";
+                     WHERE o.id = :id AND o.configuracion_id = :configuracion_id";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':id', $id);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $stmt->execute();
 
             $orden = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -81,15 +86,17 @@ class OrdenController
                 return ['success' => false, 'message' => 'Usuario, mesa y productos son obligatorios.'];
             }
 
-            $checkUser = $this->conn->prepare("SELECT COUNT(*) FROM usuarios WHERE id = :user_id");
+            $checkUser = $this->conn->prepare("SELECT COUNT(*) FROM usuarios WHERE id = :user_id AND configuracion_id = :configuracion_id");
             $checkUser->bindParam(':user_id', $user_id);
+            $checkUser->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $checkUser->execute();
             if ($checkUser->fetchColumn() === 0) {
                 return ['success' => false, 'message' => 'El usuario no existe.'];
             }
 
-            $checkMesa = $this->conn->prepare("SELECT COUNT(*) FROM mesas WHERE id = :numero_mesa");
+            $checkMesa = $this->conn->prepare("SELECT COUNT(*) FROM mesas WHERE id = :numero_mesa AND configuracion_id = :configuracion_id");
             $checkMesa->bindParam(':numero_mesa', $numero_mesa);
+            $checkMesa->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $checkMesa->execute();
             if ($checkMesa->fetchColumn() === 0) {
                 return ['success' => false, 'message' => 'La mesa no existe.'];
@@ -98,8 +105,8 @@ class OrdenController
             $this->conn->beginTransaction();
 
             $stmt = $this->conn->prepare("
-                INSERT INTO ordenes (user_id, numero_mesa, estado, notas, total) 
-                VALUES (:user_id, :numero_mesa, :estado, :notas, :total)
+                INSERT INTO ordenes (user_id, numero_mesa, estado, notas, total, configuracion_id) 
+                VALUES (:user_id, :numero_mesa, :estado, :notas, :total, :configuracion_id)
             ");
 
             $stmt->bindParam(':user_id', $user_id);
@@ -107,6 +114,7 @@ class OrdenController
             $stmt->bindParam(':estado', $estado);
             $stmt->bindParam(':notas', $notas);
             $stmt->bindParam(':total', $total);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
 
             if ($stmt->execute()) {
                 $orderId = $this->conn->lastInsertId();
@@ -144,8 +152,9 @@ class OrdenController
 
             $id = (int)$id;
 
-            $checkOrder = $this->conn->prepare("SELECT COUNT(*) FROM ordenes WHERE id = :id");
+            $checkOrder = $this->conn->prepare("SELECT COUNT(*) FROM ordenes WHERE id = :id AND configuracion_id = :configuracion_id");
             $checkOrder->bindParam(':id', $id);
+            $checkOrder->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $checkOrder->execute();
             if ($checkOrder->fetchColumn() === 0) {
                 return ['success' => false, 'message' => 'La orden no existe.'];
@@ -178,8 +187,9 @@ class OrdenController
             }
 
             if (!empty($fields)) {
-                $query = "UPDATE ordenes SET " . implode(', ', $fields) . " WHERE id = :id";
+                $query = "UPDATE ordenes SET " . implode(', ', $fields) . " WHERE id = :id AND configuracion_id = :configuracion_id";
                 $stmt = $this->conn->prepare($query);
+                $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
 
                 foreach ($params as $param => $value) {
                     $stmt->bindValue($param, $value);
@@ -230,8 +240,9 @@ class OrdenController
             $stmtProducts->bindParam(':id', $id);
             $stmtProducts->execute();
 
-            $stmt = $this->conn->prepare("DELETE FROM ordenes WHERE id = :id");
+            $stmt = $this->conn->prepare("DELETE FROM ordenes WHERE id = :id AND configuracion_id = :configuracion_id");
             $stmt->bindParam(':id', $id);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
 
             if ($stmt->execute()) {
                 $this->conn->commit();
@@ -253,10 +264,12 @@ class OrdenController
                      FROM ordenes o 
                      LEFT JOIN usuarios u ON o.user_id = u.id 
                      LEFT JOIN mesas m ON o.numero_mesa = m.id 
-                     WHERE o.estado = :estado 
+                     WHERE o.estado = :estado
+                     AND o.configuracion_id = :configuracion_id
                      ORDER BY o.id DESC";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':estado', $estado);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $stmt->execute();
 
             $ordenes = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -285,10 +298,12 @@ class OrdenController
                      FROM ordenes o 
                      LEFT JOIN usuarios u ON o.user_id = u.id 
                      LEFT JOIN mesas m ON o.numero_mesa = m.id 
-                     WHERE o.numero_mesa = :numero_mesa 
+                     WHERE o.numero_mesa = :numero_mesa
+                     AND o.configuracion_id = :configuracion_id
                      ORDER BY o.id DESC";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':numero_mesa', $numero_mesa);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $stmt->execute();
 
             $ordenes = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -316,9 +331,11 @@ class OrdenController
             $query = "SELECT op.*, p.nombre, p.precio, p.imagen 
                      FROM order_products op 
                      LEFT JOIN productos p ON op.product_id = p.id 
-                     WHERE op.order_id = :order_id";
+                     WHERE op.order_id = :order_id
+                     AND p.configuracion_id = :configuracion_id";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':order_id', $orderId);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $stmt->execute();
 
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -336,8 +353,9 @@ class OrdenController
             ");
 
             foreach ($productos as $producto) {
-                $checkProduct = $this->conn->prepare("SELECT COUNT(*) FROM productos WHERE id = :product_id");
+                $checkProduct = $this->conn->prepare("SELECT COUNT(*) FROM productos WHERE id = :product_id AND configuracion_id = :configuracion_id");
                 $checkProduct->bindParam(':product_id', $producto['id']);
+                $checkProduct->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
                 $checkProduct->execute();
                 if ($checkProduct->fetchColumn() === 0) {
                     return ['success' => false, 'message' => 'El producto con ID ' . $producto['id'] . ' no existe.'];
@@ -378,7 +396,9 @@ class OrdenController
                          LEFT JOIN mesas m ON o.numero_mesa = m.id 
                          INNER JOIN order_products op ON o.id = op.order_id
                          INNER JOIN productos p ON op.product_id = p.id 
-                         WHERE p.subcategoria IN ($placeholders)";
+                         WHERE p.subcategoria IN ($placeholders)
+                         AND o.configuracion_id = :configuracion_id
+                         AND p.configuracion_id = :configuracion_id";
 
             if ($orderId) {
                 $baseQuery .= " AND o.id = :order_id";
@@ -397,6 +417,7 @@ class OrdenController
             if ($orderId) {
                 $stmt->bindValue(':order_id', $orderId);
             }
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
 
             $stmt->execute();
             $ordenes = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -429,7 +450,9 @@ class OrdenController
                          LEFT JOIN mesas m ON o.numero_mesa = m.id 
                          INNER JOIN order_products op ON o.id = op.order_id
                          INNER JOIN productos p ON op.product_id = p.id 
-                         WHERE p.subcategoria = :subcategoria";
+                         WHERE p.subcategoria = :subcategoria
+                         AND o.configuracion_id = :configuracion_id
+                         AND p.configuracion_id = :configuracion_id";
 
             if ($orderId) {
                 $baseQuery .= " AND o.id = :order_id";
@@ -443,6 +466,7 @@ class OrdenController
             if ($orderId) {
                 $stmt->bindValue(':order_id', $orderId);
             }
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
 
             $stmt->execute();
             $ordenes = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -483,10 +507,12 @@ class OrdenController
                      FROM order_products op 
                      LEFT JOIN productos p ON op.product_id = p.id 
                      WHERE op.order_id = :order_id 
+                     AND p.configuracion_id = :configuracion_id
                      AND p.subcategoria IN ($placeholders)";
 
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':order_id', $orderId);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
 
             foreach ($subcategorias as $index => $subcategoria) {
                 $stmt->bindValue(':subcategoria' . $index, $subcategoria);
@@ -506,11 +532,13 @@ class OrdenController
                      FROM order_products op 
                      LEFT JOIN productos p ON op.product_id = p.id 
                      WHERE op.order_id = :order_id 
+                     AND p.configuracion_id = :configuracion_id
                      AND p.subcategoria = :subcategoria";
 
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':order_id', $orderId);
             $stmt->bindParam(':subcategoria', $subcategoria);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $stmt->execute();
 
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -601,6 +629,8 @@ class OrdenController
                       INNER JOIN categorias c ON p.categoria_id = c.id
                       WHERE c.nombre IN ($placeholders)
                       AND o.estado = :estado
+                      AND o.configuracion_id = :configuracion_id
+                      AND p.configuracion_id = :configuracion_id
                       ORDER BY o.id DESC";
 
             $stmt = $this->conn->prepare($query);
@@ -610,6 +640,7 @@ class OrdenController
             }
 
             $stmt->bindValue(':estado', $estado);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $stmt->execute();
             $ordenes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -647,10 +678,13 @@ class OrdenController
                      INNER JOIN productos p ON op.product_id = p.id 
                      INNER JOIN categorias c ON p.categoria_id = c.id
                      WHERE op.order_id = :order_id 
+                     AND p.configuracion_id = :configuracion_id
+                     AND c.configuracion_id = :configuracion_id
                      AND c.nombre IN ($placeholders)";
 
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':order_id', $orderId);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
 
             foreach ($categorias as $index => $categoria) {
                 $stmt->bindValue(':categoria' . $index, $categoria);
@@ -683,10 +717,10 @@ class OrdenController
             FROM ordenes o
             LEFT JOIN usuarios m ON o.user_id = m.id
             LEFT JOIN mesas me ON o.numero_mesa = me.id
-            WHERE o.id = ?
+            WHERE o.id = ? AND o.configuracion_id = ?
         ");
 
-                $stmt->execute([$ordenId]);
+                $stmt->execute([$ordenId, $this->configuracion_id]);
                 $orden = $stmt->fetch(PDO::FETCH_ASSOC);
 
                 if (!$orden) {
@@ -701,11 +735,11 @@ class OrdenController
                 (p.precio * op.cantidad) as subtotal
             FROM order_products op
             INNER JOIN productos p ON op.product_id = p.id
-            WHERE op.order_id = ?
+            WHERE op.order_id = ? AND p.configuracion_id = ?
             ORDER BY p.nombre
         ");
 
-                $stmt->execute([$ordenId]);
+                $stmt->execute([$ordenId, $this->configuracion_id]);
                 $productos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                 $orden['productos'] = $productos;
@@ -741,9 +775,10 @@ class OrdenController
                 return ['success' => false, 'message' => 'ID de la orden y nuevo estado son obligatorios.'];
             }
 
-            $stmt = $this->conn->prepare("UPDATE ordenes SET estado = :estado WHERE id = :id");
+            $stmt = $this->conn->prepare("UPDATE ordenes SET estado = :estado WHERE id = :id AND configuracion_id = :configuracion_id");
             $stmt->bindParam(':id', $id);
             $stmt->bindParam(':estado', $nuevo_estado);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
 
             if ($stmt->execute()) {
                 return ['success' => true, 'message' => 'Estado de la orden actualizado correctamente.'];
@@ -762,10 +797,11 @@ class OrdenController
                 return ['success' => false, 'message' => 'ID de la orden, método de pago y nuevo estado son obligatorios.'];
             }
 
-            $stmt = $this->conn->prepare("UPDATE ordenes SET estado = :estado, metodo_pago = :metodo_pago WHERE id = :id");
+            $stmt = $this->conn->prepare("UPDATE ordenes SET estado = :estado, metodo_pago = :metodo_pago WHERE id = :id AND configuracion_id = :configuracion_id");
             $stmt->bindParam(':id', $id);
             $stmt->bindParam(':estado', $nuevoEstado);
             $stmt->bindParam(':metodo_pago', $metodoPago);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
 
             if ($stmt->execute()) {
                 return ['success' => true, 'message' => 'Orden finalizada correctamente.'];
@@ -784,16 +820,19 @@ class OrdenController
             $params = [];
 
             if ($fechaInicio && $fechaFin) {
-                $whereClause = "WHERE DATE(o.created_at) BETWEEN :fecha_inicio AND :fecha_fin";
+                $whereClause = "WHERE DATE(o.created_at) BETWEEN :fecha_inicio AND :fecha_fin AND o.configuracion_id = :configuracion_id";
                 $params[':fecha_inicio'] = $fechaInicio;
                 $params[':fecha_fin'] = $fechaFin;
             } elseif ($fechaInicio) {
-                $whereClause = "WHERE DATE(o.created_at) >= :fecha_inicio";
+                $whereClause = "WHERE DATE(o.created_at) >= :fecha_inicio AND o.configuracion_id = :configuracion_id";
                 $params[':fecha_inicio'] = $fechaInicio;
             } elseif ($fechaFin) {
-                $whereClause = "WHERE DATE(o.created_at) <= :fecha_fin";
+                $whereClause = "WHERE DATE(o.created_at) <= :fecha_fin AND o.configuracion_id = :configuracion_id";
                 $params[':fecha_fin'] = $fechaFin;
+            } else {
+                $whereClause = "WHERE o.configuracion_id = :configuracion_id";
             }
+            $params[':configuracion_id'] = $this->configuracion_id;
 
             $query = "SELECT 
                 o.estado,
@@ -834,10 +873,12 @@ class OrdenController
                       COALESCE(SUM(o.total), 0) as total_ventas
                     FROM ordenes o 
                     WHERE DATE(o.created_at) >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+                    AND o.configuracion_id = :configuracion_id
                     GROUP BY DATE(o.created_at)
                     ORDER BY fecha DESC";
 
             $stmtPorDia = $this->conn->prepare($queryPorDia);
+            $stmtPorDia->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $stmtPorDia->execute();
             $estadisticasPorDia = $stmtPorDia->fetchAll(PDO::FETCH_ASSOC);
 
@@ -901,8 +942,10 @@ class OrdenController
                  LEFT JOIN usuarios u ON o.user_id = u.id 
                  LEFT JOIN mesas m ON o.numero_mesa = m.id 
                  WHERE o.estado IN ('Entregado', 'Cancelado', 'Listo para servir', 'Completado') 
+                 AND o.configuracion_id = :configuracion_id
                  ORDER BY o.id DESC";
             $stmt = $this->conn->prepare($query);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $stmt->execute();
 
             $ordenes = $stmt->fetchAll(PDO::FETCH_ASSOC);

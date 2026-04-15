@@ -1,4 +1,5 @@
 <?php include 'layouts/session.php'; ?>
+<?php requireLogin(); ?>
 <?php include 'layouts/main.php'; ?>
 
 <head>

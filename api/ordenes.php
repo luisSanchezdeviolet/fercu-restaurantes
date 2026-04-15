@@ -9,6 +9,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit(0);
 }
 
+require_once '../layouts/session.php';
+if (!isLoggedIn() || empty($_SESSION['configuracion_id']) || empty($_SESSION['user_id'])) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'message' => 'Sesión no válida']);
+    exit;
+}
+$configuracion_id = (int)$_SESSION['configuracion_id'];
+$session_user_id = (int)$_SESSION['user_id'];
+
 $requiredFiles = [
     '../config/database.php',
     '../controllers/OrdenController.php',
@@ -49,8 +58,8 @@ try {
         throw new Exception('Error al conectar con la base de datos');
     }
 
-    $ordenController = new OrdenController($db);
-    $mesaController = new MesaController($db);
+    $ordenController = new OrdenController($db, $configuracion_id);
+    $mesaController = new MesaController($db, $configuracion_id);
 
     $method = $_SERVER['REQUEST_METHOD'];
 
@@ -211,7 +220,7 @@ function handlePost($controller, $mesaController)
 
             switch ($action) {
                 case 'create':
-                    $user_id = $input['user_id'] ?? null;
+                    $user_id = $_SESSION['user_id'] ?? null;
                     $numero_mesa = $input['numero_mesa'] ?? null;
                     $productos = $input['productos'] ?? [];
                     $estado = $input['estado'] ?? 'Pendiente';
@@ -348,7 +357,7 @@ function handlePut($controller, $mesaController)
             switch ($action) {
                 case 'update':
                     $id = $input['id'] ?? null;
-                    $user_id = $input['user_id'] ?? null;
+                    $user_id = $_SESSION['user_id'] ?? null;
                     $numero_mesa = $input['numero_mesa'] ?? null;
                     $estado = $input['estado'] ?? null;
                     $notas = $input['notas'] ?? null;

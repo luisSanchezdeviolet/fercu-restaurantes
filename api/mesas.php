@@ -9,6 +9,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit(0);
 }
 
+require_once '../layouts/session.php';
+if (!isLoggedIn() || empty($_SESSION['configuracion_id'])) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'message' => 'Sesión no válida']);
+    exit;
+}
+$configuracion_id = (int)$_SESSION['configuracion_id'];
+
 $requiredFiles = [
     '../config/database.php',
     '../controllers/MesaController.php'
@@ -41,7 +49,7 @@ try {
         throw new Exception('Error al conectar con la base de datos');
     }
 
-    $mesaController = new MesaController($db);
+    $mesaController = new MesaController($db, $configuracion_id);
     $method = $_SERVER['REQUEST_METHOD'];
 
     switch ($method) {

@@ -2,10 +2,12 @@
 class ProductoController
 {
     private $conn;
+    private $configuracion_id;
 
-    public function __construct($db)
+    public function __construct($db, $configuracion_id = null)
     {
         $this->conn = $db;
+        $this->configuracion_id = $configuracion_id !== null ? (int)$configuracion_id : null;
     }
 
     public function findAll($page = 1, $limit = 10, $search = '', $categoria_id = null, $estado = '')
@@ -17,6 +19,8 @@ class ProductoController
 
             $whereConditions = [];
             $params = [];
+            $whereConditions[] = "p.configuracion_id = ?";
+            $params[] = $this->configuracion_id;
 
             if (!empty($search)) {
                 $whereConditions[] = "(p.nombre LIKE ? OR p.descripcion LIKE ?)";
@@ -112,6 +116,8 @@ class ProductoController
 
             $whereConditions = [];
             $params = [];
+            $whereConditions[] = "p.configuracion_id = ?";
+            $params[] = $this->configuracion_id;
 
             if (!empty($search)) {
                 $whereConditions[] = "(p.nombre LIKE ? OR p.descripcion LIKE ?)";
@@ -199,13 +205,15 @@ class ProductoController
         try {
             $stats = [];
 
-            $totalQuery = "SELECT COUNT(*) as total FROM productos";
+            $totalQuery = "SELECT COUNT(*) as total FROM productos WHERE configuracion_id = :configuracion_id";
             $totalStmt = $this->conn->prepare($totalQuery);
+            $totalStmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $totalStmt->execute();
             $stats['total_productos'] = $totalStmt->fetch(PDO::FETCH_ASSOC)['total'];
 
-            $estadoQuery = "SELECT estado, COUNT(*) as cantidad FROM productos GROUP BY estado";
+            $estadoQuery = "SELECT estado, COUNT(*) as cantidad FROM productos WHERE configuracion_id = :configuracion_id GROUP BY estado";
             $estadoStmt = $this->conn->prepare($estadoQuery);
+            $estadoStmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $estadoStmt->execute();
             $stats['por_estado'] = $estadoStmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -213,15 +221,18 @@ class ProductoController
             SELECT c.nombre as categoria, COUNT(p.id) as cantidad 
             FROM categorias c 
             LEFT JOIN productos p ON c.id = p.categoria_id 
+            WHERE c.configuracion_id = :configuracion_id
             GROUP BY c.id, c.nombre
             ORDER BY cantidad DESC
         ";
             $categoriaStmt = $this->conn->prepare($categoriaQuery);
+            $categoriaStmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $categoriaStmt->execute();
             $stats['por_categoria'] = $categoriaStmt->fetchAll(PDO::FETCH_ASSOC);
 
-            $precioQuery = "SELECT AVG(precio) as precio_promedio, MIN(precio) as precio_min, MAX(precio) as precio_max FROM productos WHERE precio > 0";
+            $precioQuery = "SELECT AVG(precio) as precio_promedio, MIN(precio) as precio_min, MAX(precio) as precio_max FROM productos WHERE precio > 0 AND configuracion_id = :configuracion_id";
             $precioStmt = $this->conn->prepare($precioQuery);
+            $precioStmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $precioStmt->execute();
             $precioStats = $precioStmt->fetch(PDO::FETCH_ASSOC);
             $stats['precios'] = [
@@ -251,12 +262,14 @@ class ProductoController
             FROM productos p
             LEFT JOIN categorias c ON p.categoria_id = c.id
             LEFT JOIN detalle_ventas dv ON p.id = dv.producto_id
+            WHERE p.configuracion_id = :configuracion_id
             GROUP BY p.id
             ORDER BY total_vendido DESC, p.nombre ASC
             LIMIT :limit
         ";
 
             $stmt = $this->conn->prepare($query);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
             $stmt->execute();
 
@@ -287,9 +300,10 @@ class ProductoController
                 return ['success' => false, 'message' => 'Estado no válido.'];
             }
 
-            $stmt = $this->conn->prepare("UPDATE productos SET estado = :estado, updated_at = NOW() WHERE id = :id");
+            $stmt = $this->conn->prepare("UPDATE productos SET estado = :estado, updated_at = NOW() WHERE id = :id AND configuracion_id = :configuracion_id");
             $stmt->bindParam(':estado', $estado);
             $stmt->bindParam(':id', $id);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
 
             if ($stmt->execute()) {
                 return ['success' => true, 'message' => 'Estado actualizado correctamente.'];
@@ -313,6 +327,7 @@ class ProductoController
             FROM productos 
             WHERE nombre LIKE :term 
             AND estado = 'activo'
+            AND configuracion_id = :configuracion_id
             ORDER BY nombre ASC
             LIMIT :limit
         ";
@@ -320,6 +335,7 @@ class ProductoController
             $stmt = $this->conn->prepare($query);
             $searchTerm = "%$term%";
             $stmt->bindParam(':term', $searchTerm);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
             $stmt->execute();
 
@@ -345,9 +361,10 @@ class ProductoController
                 return ['success' => false, 'message' => 'ID del producto requerido.'];
             }
 
-            $categoriaQuery = "SELECT categoria_id FROM productos WHERE id = :id";
+            $categoriaQuery = "SELECT categoria_id FROM productos WHERE id = :id AND configuracion_id = :configuracion_id";
             $categoriaStmt = $this->conn->prepare($categoriaQuery);
             $categoriaStmt->bindParam(':id', $producto_id);
+            $categoriaStmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $categoriaStmt->execute();
             $categoria = $categoriaStmt->fetch(PDO::FETCH_ASSOC);
 
@@ -362,6 +379,7 @@ class ProductoController
             WHERE p.categoria_id = :categoria_id 
             AND p.id != :producto_id
             AND p.estado = 'activo'
+            AND p.configuracion_id = :configuracion_id
             ORDER BY RAND()
             LIMIT :limit
         ";
@@ -369,6 +387,7 @@ class ProductoController
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':categoria_id', $categoria['categoria_id']);
             $stmt->bindParam(':producto_id', $producto_id);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
             $stmt->execute();
 
@@ -393,9 +412,10 @@ class ProductoController
             $query = "SELECT p.*, c.nombre as categoria_nombre 
                      FROM productos p 
                      LEFT JOIN categorias c ON p.categoria_id = c.id 
-                     WHERE p.id = :id";
+                     WHERE p.id = :id AND p.configuracion_id = :configuracion_id";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':id', $id);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $stmt->execute();
 
             $producto = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -404,9 +424,11 @@ class ProductoController
                 $ingredientesQuery = "SELECT pi.*, i.nombre as ingrediente_nombre, i.unidad 
                                     FROM producto_ingredientes pi 
                                     JOIN ingredientes i ON pi.ingrediente_id = i.id 
-                                    WHERE pi.producto_id = :id";
+                                    WHERE pi.producto_id = :id
+                                    AND i.configuracion_id = :configuracion_id";
                 $ingredientesStmt = $this->conn->prepare($ingredientesQuery);
                 $ingredientesStmt->bindParam(':id', $id);
+                $ingredientesStmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
                 $ingredientesStmt->execute();
 
                 $producto['ingredientes'] = $ingredientesStmt->fetchAll(PDO::FETCH_ASSOC);
@@ -441,16 +463,18 @@ class ProductoController
                 return ['success' => false, 'message' => 'El precio debe ser un número válido mayor o igual a 0.'];
             }
 
-            $check = $this->conn->prepare("SELECT COUNT(*) FROM productos WHERE nombre = :nombre");
+            $check = $this->conn->prepare("SELECT COUNT(*) FROM productos WHERE nombre = :nombre AND configuracion_id = :configuracion_id");
             $check->bindParam(':nombre', $nombre);
+            $check->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $check->execute();
             if ($check->fetchColumn() > 0) {
                 return ['success' => false, 'message' => 'El producto ya está registrado.'];
             }
 
             if (!empty($categoria_id)) {
-                $checkCategoria = $this->conn->prepare("SELECT COUNT(*) FROM categorias WHERE id = :categoria_id");
+                $checkCategoria = $this->conn->prepare("SELECT COUNT(*) FROM categorias WHERE id = :categoria_id AND configuracion_id = :configuracion_id");
                 $checkCategoria->bindParam(':categoria_id', $categoria_id);
+                $checkCategoria->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
                 $checkCategoria->execute();
                 if ($checkCategoria->fetchColumn() === 0) {
                     return ['success' => false, 'message' => 'La categoría especificada no existe.'];
@@ -460,8 +484,8 @@ class ProductoController
             $this->conn->beginTransaction();
 
             $stmt = $this->conn->prepare("
-                INSERT INTO productos (nombre, precio, categoria_id, descripcion, imagen, created_at, updated_at, estado) 
-                VALUES (:nombre, :precio, :categoria_id, :descripcion, :imagen, NOW(), NOW(), :estado)
+                INSERT INTO productos (nombre, precio, categoria_id, descripcion, imagen, configuracion_id, created_at, updated_at, estado) 
+                VALUES (:nombre, :precio, :categoria_id, :descripcion, :imagen, :configuracion_id, NOW(), NOW(), :estado)
             ");
 
             $stmt->bindParam(':nombre', $nombre);
@@ -469,6 +493,7 @@ class ProductoController
             $stmt->bindParam(':categoria_id', $categoria_id);
             $stmt->bindParam(':descripcion', $descripcion);
             $stmt->bindParam(':imagen', $imagen);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $stmt->bindParam(':estado', $estado);
 
             if ($stmt->execute()) {
@@ -508,16 +533,18 @@ class ProductoController
 
             $id = (int)$id;
 
-            $checkProducto = $this->conn->prepare("SELECT COUNT(*) FROM productos WHERE id = :id");
+            $checkProducto = $this->conn->prepare("SELECT COUNT(*) FROM productos WHERE id = :id AND configuracion_id = :configuracion_id");
             $checkProducto->bindParam(':id', $id);
+            $checkProducto->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $checkProducto->execute();
             if ($checkProducto->fetchColumn() === 0) {
                 return ['success' => false, 'message' => 'El producto no existe.'];
             }
 
             if (!empty($categoria_id)) {
-                $checkCategoria = $this->conn->prepare("SELECT COUNT(*) FROM categorias WHERE id = :categoria_id");
+                $checkCategoria = $this->conn->prepare("SELECT COUNT(*) FROM categorias WHERE id = :categoria_id AND configuracion_id = :configuracion_id");
                 $checkCategoria->bindParam(':categoria_id', $categoria_id);
+                $checkCategoria->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
                 $checkCategoria->execute();
                 if ($checkCategoria->fetchColumn() === 0) {
                     return ['success' => false, 'message' => 'La categoría especificada no existe.'];
@@ -530,7 +557,7 @@ class ProductoController
                 UPDATE productos
                 SET nombre = :nombre, precio = :precio, categoria_id = :categoria_id, 
                     descripcion = :descripcion, imagen = :imagen, updated_at = NOW(), estado = :estado
-                WHERE id = :id
+                WHERE id = :id AND configuracion_id = :configuracion_id
             ");
 
             $stmt->bindParam(':nombre', $nombre);
@@ -540,11 +567,13 @@ class ProductoController
             $stmt->bindParam(':imagen', $imagen);
             $stmt->bindParam(':estado', $estado);
             $stmt->bindParam(':id', $id);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
 
             if ($stmt->execute()) {
                 if (!empty($ingredientes) && is_array($ingredientes)) {
-                    $deleteIngredientes = $this->conn->prepare("DELETE FROM producto_ingredientes WHERE producto_id = :producto_id");
+                    $deleteIngredientes = $this->conn->prepare("DELETE pi FROM producto_ingredientes pi INNER JOIN productos p ON pi.producto_id = p.id WHERE pi.producto_id = :producto_id AND p.configuracion_id = :configuracion_id");
                     $deleteIngredientes->bindParam(':producto_id', $id);
+                    $deleteIngredientes->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
                     $deleteIngredientes->execute();
 
                     $this->addIngredientesToProduct($id, $ingredientes);
@@ -571,12 +600,14 @@ class ProductoController
 
             $this->conn->beginTransaction();
 
-            $deleteIngredientes = $this->conn->prepare("DELETE FROM producto_ingredientes WHERE producto_id = :id");
+            $deleteIngredientes = $this->conn->prepare("DELETE pi FROM producto_ingredientes pi INNER JOIN productos p ON pi.producto_id = p.id WHERE pi.producto_id = :id AND p.configuracion_id = :configuracion_id");
             $deleteIngredientes->bindParam(':id', $id);
+            $deleteIngredientes->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $deleteIngredientes->execute();
 
-            $stmt = $this->conn->prepare("DELETE FROM productos WHERE id = :id");
+            $stmt = $this->conn->prepare("DELETE FROM productos WHERE id = :id AND configuracion_id = :configuracion_id");
             $stmt->bindParam(':id', $id);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
 
             if ($stmt->execute()) {
                 $this->conn->commit();
@@ -598,9 +629,11 @@ class ProductoController
                      FROM productos p 
                      LEFT JOIN categorias c ON p.categoria_id = c.id 
                      WHERE p.categoria_id = :categoria_id 
+                     AND p.configuracion_id = :configuracion_id
                      ORDER BY p.nombre ASC";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':categoria_id', $categoria_id);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $stmt->execute();
 
             $productos = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -620,6 +653,7 @@ class ProductoController
 
     private function addIngredientesToProduct($producto_id, $ingredientes)
     {
+        $checkIngrediente = $this->conn->prepare("SELECT COUNT(*) FROM ingredientes WHERE id = :ingrediente_id AND configuracion_id = :configuracion_id");
         $stmt = $this->conn->prepare("
             INSERT INTO producto_ingredientes (producto_id, ingrediente_id, cantidad) 
             VALUES (:producto_id, :ingrediente_id, :cantidad)
@@ -627,6 +661,13 @@ class ProductoController
 
         foreach ($ingredientes as $ingrediente) {
             if (isset($ingrediente['ingrediente_id']) && isset($ingrediente['cantidad'])) {
+                $checkIngrediente->bindParam(':ingrediente_id', $ingrediente['ingrediente_id']);
+                $checkIngrediente->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
+                $checkIngrediente->execute();
+                if ((int)$checkIngrediente->fetchColumn() === 0) {
+                    continue;
+                }
+
                 $stmt->bindParam(':producto_id', $producto_id);
                 $stmt->bindParam(':ingrediente_id', $ingrediente['ingrediente_id']);
                 $stmt->bindParam(':cantidad', $ingrediente['cantidad']);
@@ -644,6 +685,22 @@ class ProductoController
 
             if (!is_numeric($cantidad) || $cantidad <= 0) {
                 return ['success' => false, 'message' => 'La cantidad debe ser un número mayor a 0.'];
+            }
+
+            $checkProducto = $this->conn->prepare("SELECT COUNT(*) FROM productos WHERE id = :producto_id AND configuracion_id = :configuracion_id");
+            $checkProducto->bindParam(':producto_id', $producto_id);
+            $checkProducto->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
+            $checkProducto->execute();
+            if ((int)$checkProducto->fetchColumn() === 0) {
+                return ['success' => false, 'message' => 'Producto no válido para esta cuenta.'];
+            }
+
+            $checkIngrediente = $this->conn->prepare("SELECT COUNT(*) FROM ingredientes WHERE id = :ingrediente_id AND configuracion_id = :configuracion_id");
+            $checkIngrediente->bindParam(':ingrediente_id', $ingrediente_id);
+            $checkIngrediente->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
+            $checkIngrediente->execute();
+            if ((int)$checkIngrediente->fetchColumn() === 0) {
+                return ['success' => false, 'message' => 'Ingrediente no válido para esta cuenta.'];
             }
 
             $check = $this->conn->prepare("SELECT COUNT(*) FROM producto_ingredientes WHERE producto_id = :producto_id AND ingrediente_id = :ingrediente_id");
@@ -678,6 +735,14 @@ class ProductoController
                 return ['success' => false, 'message' => 'ID del producto e ingrediente son obligatorios.'];
             }
 
+            $checkProducto = $this->conn->prepare("SELECT COUNT(*) FROM productos WHERE id = :producto_id AND configuracion_id = :configuracion_id");
+            $checkProducto->bindParam(':producto_id', $producto_id);
+            $checkProducto->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
+            $checkProducto->execute();
+            if ((int)$checkProducto->fetchColumn() === 0) {
+                return ['success' => false, 'message' => 'Producto no válido para esta cuenta.'];
+            }
+
             $stmt = $this->conn->prepare("DELETE FROM producto_ingredientes WHERE producto_id = :producto_id AND ingrediente_id = :ingrediente_id");
             $stmt->bindParam(':producto_id', $producto_id);
             $stmt->bindParam(':ingrediente_id', $ingrediente_id);
@@ -694,8 +759,9 @@ class ProductoController
 
     public function filterByEstado($estado) {
         try {
-            $stmt = $this->conn->prepare("SELECT * FROM productos WHERE estado = :estado");
+            $stmt = $this->conn->prepare("SELECT * FROM productos WHERE estado = :estado AND configuracion_id = :configuracion_id");
             $stmt->bindParam(':estado', $estado);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $stmt->execute();
 
             $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -707,8 +773,9 @@ class ProductoController
 
     public function filterByCategoria($categoria_id) {
         try {
-            $stmt = $this->conn->prepare("SELECT * FROM productos WHERE categoria_id = :categoria_id AND estado = 'Disponible'");
+            $stmt = $this->conn->prepare("SELECT * FROM productos WHERE categoria_id = :categoria_id AND estado = 'Disponible' AND configuracion_id = :configuracion_id");
             $stmt->bindParam(':categoria_id', $categoria_id);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $stmt->execute();
 
             $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -720,9 +787,10 @@ class ProductoController
 
     public function searchByName($name) {
         try {
-            $stmt = $this->conn->prepare("SELECT * FROM productos WHERE nombre LIKE :name AND estado = 'Disponible'");
+            $stmt = $this->conn->prepare("SELECT * FROM productos WHERE nombre LIKE :name AND estado = 'Disponible' AND configuracion_id = :configuracion_id");
             $searchTerm = "%$name%";
             $stmt->bindParam(':name', $searchTerm);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $stmt->execute();
 
             $result = $stmt->fetchAll(PDO::FETCH_ASSOC);

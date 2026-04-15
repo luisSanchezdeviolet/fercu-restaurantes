@@ -2,17 +2,20 @@
 class CategoriaController
 {
     private $conn;
+    private $configuracion_id;
 
-    public function __construct($db)
+    public function __construct($db, $configuracion_id = null)
     {
         $this->conn = $db;
+        $this->configuracion_id = $configuracion_id !== null ? (int)$configuracion_id : null;
     }
 
     public function findAll()
     {
         try {
-            $query = "SELECT * FROM categorias ORDER BY id DESC";
+            $query = "SELECT * FROM categorias WHERE configuracion_id = :configuracion_id ORDER BY id DESC";
             $stmt = $this->conn->prepare($query);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $stmt->execute();
 
             $categorias = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -33,9 +36,10 @@ class CategoriaController
     public function findById($id)
     {
         try {
-            $query = "SELECT * FROM categorias WHERE id = :id";
+            $query = "SELECT * FROM categorias WHERE id = :id AND configuracion_id = :configuracion_id";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':id', $id);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $stmt->execute();
 
             $categoria = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -67,21 +71,23 @@ class CategoriaController
                 return ['success' => false, 'message' => 'Todos los campos son obligatorios.'];
             }
 
-            $check = $this->conn->prepare("SELECT COUNT(*) FROM categorias WHERE nombre = :nombre");
+            $check = $this->conn->prepare("SELECT COUNT(*) FROM categorias WHERE nombre = :nombre AND configuracion_id = :configuracion_id");
             $check->bindParam(':nombre', $name);
+            $check->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $check->execute();
             if ($check->fetchColumn() > 0) {
                 return ['success' => false, 'message' => 'La categoría ya está registrada.'];
             }
 
             $stmt = $this->conn->prepare("
-                INSERT INTO categorias (nombre, estado, imagen) 
-                VALUES (:nombre, :estado, :imagen)
+                INSERT INTO categorias (nombre, estado, imagen, configuracion_id) 
+                VALUES (:nombre, :estado, :imagen, :configuracion_id)
             ");
 
             $stmt->bindParam(':nombre', $name);
             $stmt->bindParam(':estado', $estado);
             $stmt->bindParam(':imagen', $imagen);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
 
             if ($stmt->execute()) {
                 return [
@@ -106,8 +112,9 @@ class CategoriaController
 
             $id = (int)$id;
 
-            $checkUser = $this->conn->prepare("SELECT COUNT(*) FROM categorias WHERE id = :id");
+            $checkUser = $this->conn->prepare("SELECT COUNT(*) FROM categorias WHERE id = :id AND configuracion_id = :configuracion_id");
             $checkUser->bindParam(':id', $id);
+            $checkUser->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $checkUser->execute();
             if ($checkUser->fetchColumn() === 0) {
                 return ['success' => false, 'message' => 'La categoría no existe.'];
@@ -117,20 +124,21 @@ class CategoriaController
                 $stmt = $this->conn->prepare("
                     UPDATE categorias
                     SET nombre = :nombre, estado = :estado, imagen = :imagen
-                    WHERE id = :id
+                    WHERE id = :id AND configuracion_id = :configuracion_id
                 ");
                 $stmt->bindParam(':imagen', $imagen);
             } else {
                 $stmt = $this->conn->prepare("
                     UPDATE categorias
                     SET nombre = :nombre, estado = :estado
-                    WHERE id = :id
+                    WHERE id = :id AND configuracion_id = :configuracion_id
                 ");
             }
 
             $stmt->bindParam(':nombre', $name);
             $stmt->bindParam(':estado', $estado);
             $stmt->bindParam(':id', $id);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
 
             if ($stmt->execute()) {
                 return ['success' => true, 'message' => 'Categoría actualizada correctamente.'];
@@ -149,8 +157,9 @@ class CategoriaController
                 return ['success' => false, 'message' => 'ID de la categoría es obligatorio.'];
             }
 
-            $stmt = $this->conn->prepare("DELETE FROM categorias WHERE id = :id");
+            $stmt = $this->conn->prepare("DELETE FROM categorias WHERE id = :id AND configuracion_id = :configuracion_id");
             $stmt->bindParam(':id', $id);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
 
             if ($stmt->execute()) {
                 return ['success' => true, 'message' => 'Categoría eliminada correctamente.'];
@@ -165,9 +174,10 @@ class CategoriaController
     public function filterByEstado($estado)
     {
         try {
-            $query = "SELECT * FROM categorias WHERE estado = :estado ORDER BY id DESC";
+            $query = "SELECT * FROM categorias WHERE estado = :estado AND configuracion_id = :configuracion_id ORDER BY id DESC";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':estado', $estado);
+            $stmt->bindValue(':configuracion_id', $this->configuracion_id, PDO::PARAM_INT);
             $stmt->execute();
 
             $categorias = $stmt->fetchAll(PDO::FETCH_ASSOC);
