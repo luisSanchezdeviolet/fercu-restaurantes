@@ -13,6 +13,8 @@ Esta carpeta contiene toda la documentación necesaria para **instalar y configu
 | **05-GESTION_SUSCRIPCION.md** | Gestión de suscripciones por parte del usuario |
 | **06-SAAS_ADMIN.md** | Panel de administración del SaaS |
 | **07-MULTI_TENANCY.md** | Arquitectura multi-tenancy del sistema |
+| **08-HARDENING_FASE_1_1.md** | Propuesta técnica/comercial de hardening de seguridad |
+| **09-PROPUESTA_COMERCIAL_SERVICIOS.md** | Propuesta formal para cotizar servicios y adicionales |
 
 ## 📄 Roadmap y Estado del Proyecto
 
