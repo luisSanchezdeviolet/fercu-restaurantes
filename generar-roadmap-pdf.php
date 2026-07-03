@@ -56,7 +56,7 @@ $html = <<<HTML
     <li>Modal de registro con 3 opciones: Trial 15 días, Básico, Professional</li>
     <li>Validación trial único por email</li>
     <li>Generación automática de credenciales</li>
-    <li>Envío de credenciales por email (SendGrid)</li>
+    <li>Envío de credenciales por email (Mailgun)</li>
     <li>Diseño responsive</li>
 </ul>
 
@@ -87,7 +87,7 @@ $html = <<<HTML
     <li>Scripts: stripe-sync-plans, stripe-switch-mode, stripe-test-connection</li>
 </ul>
 
-<h3>1.6 Integración SendGrid</h3>
+<h3>1.6 Integración Mailgun</h3>
 <ul>
     <li>Email de bienvenida con trial</li>
     <li>Email de bienvenida con suscripción de pago</li>

@@ -50,7 +50,7 @@ No incluye:
 1. Pentest externo certificado.
 2. Refactor completo de UI/UX.
 3. Nuevas funcionalidades de negocio.
-4. Integraciones de terceros fuera de Stripe/SendGrid.
+4. Integraciones de terceros fuera de Stripe/Mailgun.
 
 ---
 

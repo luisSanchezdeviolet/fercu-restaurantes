@@ -312,9 +312,8 @@ UPDATE plans SET stripe_price_id = 'price_XXXXX' WHERE id = 5; -- Professional A
 Ya tienes Stripe completamente integrado. Los pasos siguientes son:
 
 1. ✅ Probar pagos en modo TEST
-2. ✅ Configurar SendGrid para emails
+2. ✅ Configurar Mailgun para emails
 3. ✅ Activar modo LIVE cuando todo esté listo
 4. ✅ Monitorear los pagos en Stripe Dashboard
 
 **¿Necesitas ayuda?** Contacta a soporte: contacto@fercupuntodeventa.com
-

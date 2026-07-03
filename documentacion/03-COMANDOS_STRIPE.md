@@ -219,13 +219,13 @@ php -r "if(function_exists('opcache_reset')) opcache_reset();"
 
 ---
 
-## 📧 SendGrid (Emails)
+## Mailgun (Emails)
 
 ### Probar envío de emails
 
 ```bash
 cd /var/www/restaurantes
-php sendgrid-test.php
+php -r "require 'config/mailgun.php'; var_export(sendEmail('destino@ejemplo.com', 'Prueba', 'Prueba Mailgun', '<p>OK Mailgun</p>', 'OK Mailgun')); echo PHP_EOL;"
 ```
 
 ### Ver log de emails
@@ -248,10 +248,9 @@ grep "usuario@ejemplo.com" /var/www/restaurantes/logs/emails.log
 
 **📚 Documentación Completa:**
 - **Stripe:** `STRIPE_SETUP.md` y `GUIA_PRUEBAS_STRIPE.md`
-- **SendGrid:** `SENDGRID_SETUP.md`
+- **Mailgun:** `02-MAILGUN_SETUP.md`
 - **Comandos:** Este archivo
 
 ---
 
 **🎉 ¡Tu sistema de suscripciones está listo para probar!**
-
