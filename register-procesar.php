@@ -102,8 +102,8 @@ try {
         throw new Exception('Error al crear la configuración de la empresa');
     }
     
-    // 2. Generar contraseña temporal
-    $password_temporal = 'Restaurante' . rand(1000, 9999);
+    // 2. Generar contraseña temporal segura
+    $password_temporal = 'Rst-' . strtoupper(bin2hex(random_bytes(4)));
     $password_hash = password_hash($password_temporal, PASSWORD_DEFAULT);
     
     // 3. Crear usuario administrador
@@ -194,7 +194,7 @@ try {
     $correo_mensaje = '';
     
     try {
-        require_once 'config/sendgrid.php';
+        require_once 'config/mailgun.php';
         require_once 'config/email-templates.php';
         
         $fecha_expiracion_formatted = date('d/m/Y', strtotime($fecha_fin));
@@ -240,13 +240,13 @@ try {
             $correo_enviado = true;
             $correo_mensaje = 'Hemos enviado un correo con tus credenciales de acceso a ' . $correo;
         } else {
-            $correo_mensaje = 'No pudimos enviar el correo. Tus credenciales son: Email: ' . $correo . ', Password: ' . $password_temporal;
+            $correo_mensaje = 'No pudimos enviar el correo automáticamente. Contacta a soporte para activar tu acceso.';
         }
         
     } catch (Exception $e) {
         // No fallar si no se puede enviar el correo
         error_log("Error al enviar correo de bienvenida: " . $e->getMessage());
-        $correo_mensaje = 'Registro exitoso. Tus credenciales son: Email: ' . $correo . ', Password: ' . $password_temporal;
+        $correo_mensaje = 'Registro exitoso. Contacta a soporte si no recibes el correo de acceso.';
     }
     
     // Respuesta exitosa
@@ -257,7 +257,6 @@ try {
             'usuario_id' => $usuario_id,
             'configuracion_id' => $configuracion_id,
             'correo' => $correo,
-            'password_temporal' => $password_temporal, // Solo para desarrollo, remover en producción
             'plan_id' => $plan_id,
             'plan_nombre' => $plan['name'],
             'plan_tipo' => $plan['type'],
@@ -280,5 +279,3 @@ try {
     ]);
 }
 ?>
-
-

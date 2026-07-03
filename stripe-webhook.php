@@ -353,7 +353,7 @@ function handleInvoicePaid($invoice, $conn) {
         
         // ✅ Enviar email de confirmación de pago
         try {
-            require_once __DIR__ . '/config/sendgrid.php';
+            require_once __DIR__ . '/config/mailgun.php';
             require_once __DIR__ . '/config/email-templates.php';
             
             // Obtener información de la empresa y plan
@@ -587,4 +587,3 @@ function handleSubscriptionDeleted($subscription, $conn) {
     }
 }
 ?>
-

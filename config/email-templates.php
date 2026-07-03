@@ -9,7 +9,7 @@
 function getWelcomeTrialEmailHTML($nombre_empresa, $nombre_usuario, $email, $password, $fecha_expiracion) {
     $loginUrl = LOGIN_URL;
     $dashboardUrl = DASHBOARD_URL;
-    $supportEmail = SENDGRID_SUPPORT_EMAIL;
+    $supportEmail = EMAIL_SUPPORT_EMAIL;
     
     return <<<HTML
 <!DOCTYPE html>
@@ -111,7 +111,7 @@ HTML;
 function getWelcomeSubscriptionEmailHTML($nombre_empresa, $nombre_usuario, $email, $password, $plan_name, $plan_amount, $plan_type, $fecha_expiracion) {
     $loginUrl = LOGIN_URL;
     $dashboardUrl = DASHBOARD_URL;
-    $supportEmail = SENDGRID_SUPPORT_EMAIL;
+    $supportEmail = EMAIL_SUPPORT_EMAIL;
     
     $intervalText = ($plan_type === 'monthly') ? 'mensual' : 'anual';
     
@@ -231,7 +231,7 @@ HTML;
  */
 function getPaymentConfirmationEmailHTML($nombre_empresa, $amount, $currency, $plan_name, $fecha_proximo_pago) {
     $dashboardUrl = DASHBOARD_URL;
-    $supportEmail = SENDGRID_SUPPORT_EMAIL;
+    $supportEmail = EMAIL_SUPPORT_EMAIL;
     
     return <<<HTML
 <!DOCTYPE html>
@@ -310,5 +310,4 @@ function getPaymentConfirmationEmailHTML($nombre_empresa, $amount, $currency, $p
 HTML;
 }
 ?>
-
 
