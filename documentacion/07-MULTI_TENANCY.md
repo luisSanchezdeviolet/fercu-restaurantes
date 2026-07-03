@@ -42,8 +42,12 @@
   1. **Prueba Gratuita** - $0 (15 días)
   2. **Plan Básico Mensual** - $199/mes
   3. **Plan Básico Anual** - $1,990/año (17% descuento)
-  4. **Plan Professional Mensual** - $349/mes
-  5. **Plan Professional Anual** - $3,490/año (20% descuento)
+  4. **Plan Enterprise Mensual** - $349/mes
+  5. **Plan Enterprise Anual** - $3,490/año (20% descuento)
+
+### 4.1 **Límites comerciales vigentes**
+- **Plan Básico:** máximo 3 usuarios y 8 mesas.
+- **Plan Enterprise:** sin límite de usuarios ni mesas.
 
 ### 5. **Sistema de Autenticación Mejorado**
 - ✅ Validación de suscripción activa al login
@@ -234,38 +238,67 @@ Suscripción: Activa (100 años)
 
 ---
 
-## 🎨 Próximos Pasos (Pendientes)
+## 🗺️ Estado por Fases (Actualizado)
 
-### 1. Integración de Pagos
-- [ ] Configurar Stripe
-- [ ] Configurar PayPal
-- [ ] Webhooks de pagos
-- [ ] Renovación automática
+### ✅ Fase 1 - Seguridad de acceso y aislamiento tenant (COMPLETADA)
+- APIs operativas protegidas con sesión (`productos`, `categorias`, `mesas`, `ordenes`, `ingredientes`, `cajas`).
+- Controladores operativos con filtro por `configuracion_id`.
+- Vistas operativas críticas protegidas con `requireLogin()`.
+- Flujo de órdenes atado al usuario autenticado en API.
 
-### 2. Modificar Controladores
-- [ ] Actualizar OrdenController para filtrar por configuracion_id
-- [ ] Actualizar ProductoController para filtrar por configuracion_id
-- [ ] Actualizar MesaController para filtrar por configuracion_id
-- [ ] Actualizar CajaController para filtrar por configuracion_id
-- [ ] Actualizar CategoriaController para filtrar por configuracion_id
+### ✅ Fase 2 - Seguridad operativa base (COMPLETADA)
+- Conexión de base de datos migrada a variables de entorno.
+- Plantilla `.env.example` agregada.
+- Eliminada exposición de contraseña temporal en respuesta JSON de registro.
+- Generación de contraseña temporal más segura (`random_bytes`).
+- Endurecimiento mínimo de sesión en login/sesiones (`httponly`, `samesite`, `strict mode`, regeneración de ID).
 
-### 3. Sistema de Correos
-- [ ] Integrar SendGrid o similar
-- [ ] Email de bienvenida con credenciales
-- [ ] Email de recordatorio de expiración
-- [ ] Email de confirmación de pago
+### ⏳ Fase 3 - Webhooks Stripe (PENDIENTE)
+- Idempotencia de webhooks de Stripe (evitar reprocesos duplicados).
 
-### 4. Panel de Administración
-- [ ] Vista de gestión de suscripciones
-- [ ] Reportes por empresa
-- [ ] Gestión de planes
-- [ ] Estadísticas globales
+### 💰 Mejoras Comercializables (Fuera de Fase 3)
+- Gestión avanzada de eventos de cobro (reconciliación con estado local).
+- Manejo robusto de fallos y reintentos de cobro.
+- Flujo de recuperación/reactivación de suscripción.
+- Alertas de consumo y vencimiento por plan.
+- Enforcement real de límites por plan (`max_users`, `max_tables`, etc.).
+- Reglas anti-abuso del trial más allá de correo.
+
+### ⏳ Fase 4 - Reglas comerciales SaaS (PENDIENTE)
+- Definir siguiente bloque de reglas comerciales según necesidades del cliente.
+
+### ⏳ Fase 5 - Operación y lanzamiento productivo (PENDIENTE)
+- Pruebas end-to-end formales de registro, checkout, renovación y cancelación.
+- Migraciones SQL versionadas.
+- Observabilidad básica (logs, alertas, runbook operativo).
+- Checklist de salida a producción (backup, rollback, monitoreo).
+
+---
+
+## 🔎 Auditoría Técnica Integral (2026-04-16)
+
+### 🔴 Crítico (resolver antes de salir a producción)
+- **Bypass de cobro en `checkout-process.php`**: actualmente permite crear/activar suscripción en BD sin confirmación fuerte del pago en Stripe.
+- **Falta validación de ownership en endpoints de suscripción**: algunos endpoints aceptan `stripe_subscription_id` desde cliente sin comprobar pertenencia estricta a la `configuracion_id` de sesión.
+- **Endpoints de impresión expuestos**: `api/print-thermal.php` y `api/test-printer.php` están sin sesión/autorización y con CORS abierto.
+- **Webhook sin idempotencia persistente**: si Stripe reintenta eventos, puede duplicar efectos (pagos/suscripciones/logs).
+
+### 🟠 Alto (muy recomendado en siguiente ciclo)
+- **Acciones sensibles sin protección CSRF** (incluye cambios de estado vía GET en administración SaaS).
+- **CORS permisivo (`Access-Control-Allow-Origin: *`) en APIs con sesión**.
+- **Sin suite E2E/regresión automatizada** para flujos SaaS críticos.
+- **Sin migraciones SQL versionadas** dentro del repositorio (no hay carpeta de migraciones formal).
+
+### 🟡 Medio (consistencia comercial y operativa)
+- Alinear copy comercial de planes en todo el sistema (hay textos legacy con precios/nombres antiguos).
+- Consolidar una única fuente de verdad de planes/límites para evitar divergencias entre landing, validaciones y panel.
+- Endurecer políticas operativas de logs, retención y alertas para incidentes SaaS.
 
 ---
 
 ## 🐛 Notas Importantes
 
-1. **Contraseñas Temporales**: Actualmente se muestran en la respuesta JSON del registro (solo para desarrollo). Implementar envío por correo en producción.
+1. **Contraseñas Temporales**: Ya no se exponen en la respuesta JSON del registro.
 
 2. **Configuración Demo**: ID=1 es la configuración para datos legacy. No eliminar.
 
@@ -289,11 +322,9 @@ Suscripción: Activa (100 años)
 ---
 
 **Implementado por:** AI Assistant
-**Fecha:** 2025-11-03
-**Versión:** 1.0.0
+**Fecha:** 2026-04-16
+**Versión:** 1.3.0
 
 ---
 
-🎉 **¡El sistema Multi-Tenancy está listo para usar!**
-
-
+🚀 **El sistema Multi-Tenancy está funcional, pero requiere cerrar los puntos críticos de auditoría antes de producción SaaS.**

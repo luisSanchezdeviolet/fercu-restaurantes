@@ -5,9 +5,9 @@
 - **Proveedor:** Fercu / Equipo de desarrollo
 - **Cliente:** [Nombre del cliente]
 - **Proyecto:** Fercu Restaurante SaaS
-- **Versión de propuesta:** v1.0
-- **Fecha de emisión:** 15 de abril de 2026
-- **Vigencia de propuesta:** 15 días naturales (hasta el 30 de abril de 2026)
+- **Versión de propuesta:** v1.1
+- **Fecha de emisión:** 06 de mayo de 2026
+- **Vigencia de propuesta:** 15 días naturales (hasta el 21 de mayo de 2026)
 - **Moneda:** MXN
 
 ---
@@ -19,27 +19,72 @@ El objetivo es contratar por bloques cerrados (fases o adicionales), con entrega
 
 ---
 
-## 3. Alcance inicial cotizado
+## 3. Arquitectura comercial del proyecto
 
-### Servicio base: Hardening Fase 1.1 (Seguridad)
+El proyecto se divide en dos módulos de venta y operación:
 
-Incluye:
-1. Implementación de protección CSRF en endpoints y acciones críticas.
-2. Restricción de CORS por dominios autorizados.
-3. Endurecimiento de sesión/cookies (secure, httponly, samesite, regeneración de sesión).
-4. Rate limiting básico para login y endpoints sensibles.
-5. Auditoría mínima de eventos críticos.
-6. Ajustes de endpoints administrativos para reducir riesgo de acciones no autorizadas.
+1. **Landing pública (adquisición):**
+- Sitio público de marketing.
+- Registro de nuevas empresas.
+- Selección de planes y conversión comercial.
 
-No incluye:
-1. Pentest externo certificado.
-2. Infraestructura cloud administrada.
-3. Integraciones de terceros no contempladas.
-4. Cambios funcionales de negocio fuera del alcance de seguridad.
+2. **Sistema SaaS privado (operación):**
+- Backoffice autenticado del restaurante.
+- Gestión operativa (mesas, órdenes, productos, inventario, caja, ventas).
+- Suscripciones y ciclo de vida de cliente.
 
 ---
 
-## 4. Entregables
+## 4. Paquete 1 - Crítico técnico (recomendado inmediato)
+
+Objetivo: cerrar riesgos de seguridad/ingresos antes de escalar clientes.
+
+Incluye:
+1. Cierre de bypass de cobro y validación de pago Stripe en flujo de suscripción.
+2. Validación estricta de ownership tenant en endpoints de suscripción (`stripe_subscription_id` ligado al `configuracion_id` de sesión).
+3. Protección de endpoints sensibles expuestos (impresión térmica y pruebas).
+4. Idempotencia persistente en webhooks Stripe (control por `event.id`).
+5. Hardening esencial: CSRF en acciones críticas + CORS restringido por dominio.
+
+No incluye:
+1. Pentest externo certificado.
+2. Refactor completo de UI/UX.
+3. Nuevas funcionalidades de negocio.
+4. Integraciones de terceros fuera de Stripe/SendGrid.
+
+---
+
+## 5. Paquete 2 - Mejoras vendibles (upsell)
+
+Estas mejoras se pueden cotizar por separado y vender por prioridad:
+
+1. **Gestión avanzada de eventos de cobro**
+- Reconciliación periódica Stripe vs estado local.
+- Reporte de discrepancias y auto-corrección guiada.
+
+2. **Manejo robusto de fallos y reintentos**
+- Reintentos automáticos controlados.
+- Reglas por tipo de error de cobro.
+
+3. **Recuperación/reactivación de suscripción**
+- Flujos guiados de recuperación para pagos fallidos.
+- Notificaciones automáticas de reactivación.
+
+4. **Alertas de consumo y vencimiento por plan**
+- Alertas por proximidad a fecha de corte.
+- Alertas de consumo según reglas comerciales.
+
+5. **Enforcement real de límites por plan**
+- Aplicar límites de plan en backend:
+  - Básico: 3 usuarios y 8 mesas.
+  - Enterprise: sin límite de usuarios/mesas.
+
+6. **Reglas anti-abuso del trial**
+- Controles adicionales más allá de correo (IP, dispositivo, fingerprint, ventana temporal, etc.).
+
+---
+
+## 6. Entregables
 
 1. Código implementado en repositorio.
 2. Documento de cambios y endpoints protegidos (antes/después).
@@ -49,18 +94,22 @@ No incluye:
 
 ---
 
-## 5. Esquema económico
+## 7. Esquema económico
 
-### 5.1 Costo del servicio base
+### 7.1 Costo del paquete crítico
 
-- **Hardening Fase 1.1 (paquete recomendado):** **$[Monto] MXN + IVA**
+- **Paquete 1 - Crítico técnico:** **$[Monto] MXN + IVA**
 
-### 5.2 Forma de pago sugerida
+### 7.2 Costo de mejoras vendibles (opcionales)
+
+- **Se cotizan por ítem o por bolsa de horas**, según complejidad y urgencia.
+
+### 7.3 Forma de pago sugerida
 
 1. **50% anticipo** al inicio.
 2. **50% contra entrega** de alcance y evidencias.
 
-### 5.3 Condiciones
+### 7.4 Condiciones
 
 1. Todo trabajo adicional fuera de este alcance se cotiza por separado.
 2. El cliente debe proveer accesos, dominios y ambientes requeridos.
@@ -68,7 +117,7 @@ No incluye:
 
 ---
 
-## 6. Cronograma estimado
+## 8. Cronograma estimado
 
 - **Inicio estimado:** [Fecha]
 - **Duración estimada:** [X] días hábiles
@@ -78,7 +127,7 @@ No incluye:
 
 ---
 
-## 7. Control de cambios (adicionales cobrables)
+## 9. Control de cambios (adicionales cobrables)
 
 Este apartado permite sumar nuevos puntos sin rehacer la propuesta.
 
@@ -97,7 +146,7 @@ Estados sugeridos:
 
 ---
 
-## 8. Bolsa de horas (opcional para extras)
+## 10. Bolsa de horas (opcional para extras)
 
 Si el cliente prefiere flexibilidad:
 
@@ -108,7 +157,7 @@ Si el cliente prefiere flexibilidad:
 
 ---
 
-## 9. Criterios de aceptación
+## 11. Criterios de aceptación
 
 Se considera entregado cuando:
 1. Se completa el alcance definido en esta propuesta.
@@ -117,14 +166,14 @@ Se considera entregado cuando:
 
 ---
 
-## 10. Soporte post-entrega
+## 12. Soporte post-entrega
 
 - **Garantía técnica de ajustes por defecto de implementación:** [7/15/30] días naturales.
 - No cubre nuevas funcionalidades ni cambios de alcance.
 
 ---
 
-## 11. Aprobación
+## 13. Aprobación
 
 **Cliente**  
 Nombre: ____________________  
@@ -156,4 +205,3 @@ Para clientes con presupuesto limitado:
 1. Vender primero **servicio base de hardening**.
 2. Luego agregar adicionales por impacto y urgencia.
 3. Usar la tabla de control de cambios para aprobar cada nuevo cobro.
-

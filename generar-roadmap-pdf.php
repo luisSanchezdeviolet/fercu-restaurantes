@@ -35,7 +35,7 @@ $html = <<<HTML
 
 <h1>ROADMAP SAAS - FERCU RESTAURANTE</h1>
 <p><strong>Sistema de gestión de restaurantes con suscripciones</strong></p>
-<p>Fecha: 10 de Febrero, 2025 | Versión: 1.0</p>
+<p>Fecha: 15 de Abril, 2026 | Versión: 1.2</p>
 
 <div class="section">
 <h2>1. LO QUE YA TENEMOS (IMPLEMENTADO)</h2>
@@ -118,34 +118,43 @@ $html = <<<HTML
 </div>
 
 <div class="section">
-<h2>2. LO QUE NOS FALTA (PENDIENTE)</h2>
+<h2>2. ESTADO POR FASES (PENDIENTES Y COMPLETADAS)</h2>
 
-<h3>2.1 Alta Prioridad - Antes de Producción</h3>
-<ul class="pending">
-    <li>Pruebas completas en modo TEST (registro, pagos, webhooks)</li>
-    <li>Migración Stripe a modo LIVE</li>
-    <li>Configurar webhook en Stripe LIVE</li>
-    <li>Certificado SSL/HTTPS</li>
-    <li>Backup de base de datos antes de lanzar</li>
+<h3>2.1 Fase 1 - Acceso y aislamiento tenant (COMPLETADA)</h3>
+<ul class="check">
+    <li>APIs operativas protegidas con sesión</li>
+    <li>Filtros por configuracion_id en controladores críticos</li>
+    <li>Vistas operativas protegidas con requireLogin()</li>
 </ul>
 
-<h3>2.2 Media Prioridad - SaaS Profesional</h3>
-<ul class="pending">
-    <li><strong>Notificaciones por email:</strong> Recordatorio 7 días antes de vencer, pago fallido, cancelación</li>
-    <li><strong>Facturación:</strong> Generar facturas PDF, descargar desde historial</li>
-    <li><strong>Integración SAT (México):</strong> Facturación electrónica CFDI</li>
-    <li><strong>Métricas de uso:</strong> Dashboard por empresa, alertas de límite de plan</li>
+<h3>2.2 Fase 2 - Seguridad operativa base (COMPLETADA)</h3>
+<ul class="check">
+    <li>Base de datos migrada a variables de entorno</li>
+    <li>Plantilla .env.example incorporada</li>
+    <li>Registro sin exposición de contraseña temporal en JSON</li>
+    <li>Hardening mínimo de sesión (strict mode, httponly, samesite, regenerate id)</li>
 </ul>
 
-<h3>2.3 Baja Prioridad - Mejoras Futuras</h3>
+<h3>2.3 Fase 3 - Billing robusto (PENDIENTE)</h3>
 <ul class="pending">
-    <li>Cupones y códigos promocionales</li>
-    <li>Programa de referidos</li>
-    <li>2FA (autenticación de dos factores)</li>
-    <li>Log de accesos y alertas de seguridad</li>
-    <li>Tour guiado para nuevos usuarios</li>
-    <li>Chat de soporte</li>
-    <li>Reportes SAAS avanzados (churn, LTV)</li>
+    <li>Idempotencia de webhooks Stripe</li>
+    <li>Reconciliación de cobros/eventos</li>
+    <li>Manejo robusto de fallos y reintentos</li>
+</ul>
+
+<h3>2.4 Fase 4 - Reglas comerciales SaaS (PENDIENTE)</h3>
+<ul class="pending">
+    <li>Enforcement real de límites por plan (usuarios, mesas, etc.)</li>
+    <li>Políticas anti-abuso de trial</li>
+    <li>Alertas de consumo y vencimiento por plan</li>
+</ul>
+
+<h3>2.5 Fase 5 - Operación y salida a producción (PENDIENTE)</h3>
+<ul class="pending">
+    <li>Pruebas E2E formales (registro, pago, renovación, cancelación)</li>
+    <li>Migraciones SQL versionadas</li>
+    <li>Observabilidad y runbook operativo</li>
+    <li>Checklist final de producción (backup, rollback, monitoreo)</li>
 </ul>
 </div>
 
@@ -161,13 +170,12 @@ $html = <<<HTML
 
 <div class="section highlight">
 <h2>4. CONCLUSIÓN</h2>
-<p><strong>Estado actual:</strong> El sistema está ~95% completo para funcionar como SaaS.</p>
+<p><strong>Estado actual:</strong> Fase 1 y Fase 2 completadas; proyecto en transición a Fase 3.</p>
 <p><strong>Para ser un SaaS 100% profesional falta:</strong></p>
 <ul>
-    <li>Completar pruebas en TEST</li>
-    <li>Migrar a producción (Stripe LIVE, HTTPS)</li>
-    <li>Notificaciones automáticas de vencimiento</li>
-    <li>Facturación electrónica (opcional para México)</li>
+    <li>Completar Fase 3 (billing robusto)</li>
+    <li>Completar Fase 4 (límites y reglas comerciales)</li>
+    <li>Completar Fase 5 (operación y salida a producción)</li>
 </ul>
 <p><strong>Documentación:</strong> Toda la guía de instalación y configuración está en la carpeta <code>documentacion/</code></p>
 </div>
