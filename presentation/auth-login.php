@@ -1,5 +1,15 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (isset($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443);
+
+    ini_set('session.use_strict_mode', '1');
+    ini_set('session.cookie_httponly', '1');
+    ini_set('session.cookie_secure', $isHttps ? '1' : '0');
+    ini_set('session.cookie_samesite', 'Lax');
+
+    session_start();
+}
 require_once '../config/database.php';
 
 header('Content-Type: application/json');
@@ -38,6 +48,8 @@ try {
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
         
         if (password_verify($password, $user['password'])) {
+            session_regenerate_id(true);
+
             // Verificar que la empresa esté activa
             if (isset($user['empresa_activa']) && $user['empresa_activa'] == 0) {
                 echo json_encode(['success' => false, 'message' => 'Tu cuenta de empresa está inactiva. Contacta al soporte.']);
