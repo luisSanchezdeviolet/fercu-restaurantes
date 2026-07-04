@@ -247,6 +247,188 @@ class SaasAdminController
     }
 
     /**
+     * Obtener pagos registrados en el SaaS.
+     */
+    public function getAllPayments($limit = 200)
+    {
+        try {
+            $limit = max(1, min((int)$limit, 500));
+            $query = "
+                SELECT
+                    pay.id,
+                    pay.payment_date,
+                    pay.amount,
+                    pay.currency,
+                    pay.payment_method,
+                    pay.transaction_id,
+                    pay.status,
+                    pay.configuracion_id,
+                    c.nombre AS company_name,
+                    p.name AS plan_name,
+                    p.type AS plan_type,
+                    s.id AS subscription_id
+                FROM payments pay
+                LEFT JOIN configuracion c ON c.id = pay.configuracion_id
+                LEFT JOIN plans p ON p.id = pay.plan_id
+                LEFT JOIN subscriptions s ON s.id = pay.subscription_id
+                ORDER BY pay.payment_date DESC, pay.id DESC
+                LIMIT $limit
+            ";
+
+            $stmt = $this->conn->query($query);
+            return ['success' => true, 'data' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
+        } catch (Exception $e) {
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Obtener suscripciones con empresa y plan.
+     */
+    public function getAllSubscriptions($status = 'all', $limit = 200)
+    {
+        try {
+            $limit = max(1, min((int)$limit, 500));
+            $where = '';
+            if ($status === 'active') {
+                $where = 'WHERE s.status = 1';
+            } elseif ($status === 'inactive') {
+                $where = 'WHERE s.status = 0';
+            }
+
+            $query = "
+                SELECT
+                    s.id,
+                    s.configuracion_id,
+                    c.nombre AS company_name,
+                    p.name AS plan_name,
+                    p.type AS plan_type,
+                    p.amount,
+                    p.currency,
+                    s.start_date,
+                    s.limit_date,
+                    DATEDIFF(s.limit_date, CURDATE()) AS days_left,
+                    s.status,
+                    s.payment_method,
+                    s.payment_reference,
+                    s.stripe_subscription_id,
+                    s.stripe_customer_id,
+                    s.created_at
+                FROM subscriptions s
+                LEFT JOIN configuracion c ON c.id = s.configuracion_id
+                LEFT JOIN plans p ON p.id = s.plan_id
+                $where
+                ORDER BY s.status DESC, s.limit_date ASC, s.id DESC
+                LIMIT $limit
+            ";
+
+            $stmt = $this->conn->query($query);
+            return ['success' => true, 'data' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
+        } catch (Exception $e) {
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Obtener planes comerciales.
+     */
+    public function getAllPlans($status = 'all')
+    {
+        try {
+            $where = '';
+            $params = [];
+            if ($status !== 'all') {
+                $where = 'WHERE status = ?';
+                $params[] = $status;
+            }
+
+            $query = "
+                SELECT
+                    id,
+                    name,
+                    type,
+                    amount,
+                    currency,
+                    description,
+                    max_users,
+                    max_tables,
+                    status,
+                    stripe_product_id,
+                    stripe_price_id,
+                    created_at,
+                    updated_at
+                FROM plans
+                $where
+                ORDER BY FIELD(type, 'trial', 'monthly', 'annual'), amount ASC, id ASC
+            ";
+
+            $stmt = $this->conn->prepare($query);
+            $stmt->execute($params);
+            return ['success' => true, 'data' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
+        } catch (Exception $e) {
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Resumen de métodos de pago basado en el enum actual de payments/subscriptions.
+     */
+    public function getPaymentMethodsSummary()
+    {
+        try {
+            $methods = [
+                'stripe' => ['name' => 'Stripe', 'description' => 'Pagos con tarjeta y suscripciones desde Stripe'],
+                'paypal' => ['name' => 'PayPal', 'description' => 'Pagos o suscripciones procesadas con PayPal'],
+                'manual' => ['name' => 'Manual', 'description' => 'Pagos registrados manualmente por administración'],
+                'pending' => ['name' => 'Pendiente', 'description' => 'Suscripción creada sin método confirmado']
+            ];
+
+            $paymentsStmt = $this->conn->query("
+                SELECT payment_method, COUNT(*) AS total, COALESCE(SUM(amount), 0) AS amount
+                FROM payments
+                GROUP BY payment_method
+            ");
+            foreach ($paymentsStmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                $key = $row['payment_method'];
+                if (!isset($methods[$key])) {
+                    $methods[$key] = ['name' => ucfirst((string)$key), 'description' => 'Método detectado en pagos'];
+                }
+                $methods[$key]['payments_count'] = (int)$row['total'];
+                $methods[$key]['payments_amount'] = (float)$row['amount'];
+            }
+
+            $subsStmt = $this->conn->query("
+                SELECT payment_method, COUNT(*) AS total
+                FROM subscriptions
+                GROUP BY payment_method
+            ");
+            foreach ($subsStmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                $key = $row['payment_method'];
+                if (!isset($methods[$key])) {
+                    $methods[$key] = ['name' => ucfirst((string)$key), 'description' => 'Método detectado en suscripciones'];
+                }
+                $methods[$key]['subscriptions_count'] = (int)$row['total'];
+            }
+
+            $data = [];
+            foreach ($methods as $key => $method) {
+                $data[] = [
+                    'key' => $key,
+                    'name' => $method['name'],
+                    'description' => $method['description'],
+                    'payments_count' => $method['payments_count'] ?? 0,
+                    'payments_amount' => $method['payments_amount'] ?? 0,
+                    'subscriptions_count' => $method['subscriptions_count'] ?? 0
+                ];
+            }
+
+            return ['success' => true, 'data' => $data];
+        } catch (Exception $e) {
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+
+    /**
      * Registrar actividad
      */
     private function logActivity($configId, $action, $description)
@@ -261,4 +443,3 @@ class SaasAdminController
     }
 }
 ?>
-

@@ -45,6 +45,21 @@
           <span style="color: #667eea; font-weight: 600;"> Panel SAAS </span>
         </a>
       </li>
+      <li class="side-nav-item">
+        <a data-bs-toggle="collapse" href="#sidebarSaasAdmin" aria-expanded="false" aria-controls="sidebarSaasAdmin" class="side-nav-link">
+          <i class="mdi mdi-shield-crown-outline"></i>
+          <span> Administración SaaS </span>
+          <span class="menu-arrow"></span>
+        </a>
+        <div class="collapse" id="sidebarSaasAdmin">
+          <ul class="side-nav-second-level">
+            <li><a href="saas-payments.php"><i class="mdi mdi-credit-card-check-outline"></i> Pagos</a></li>
+            <li><a href="saas-subscriptions.php"><i class="mdi mdi-calendar-check-outline"></i> Suscripciones</a></li>
+            <li><a href="saas-plans.php"><i class="mdi mdi-package-variant-closed"></i> Planes</a></li>
+            <li><a href="saas-payment-methods.php"><i class="mdi mdi-credit-card-cog-outline"></i> Métodos de pago</a></li>
+          </ul>
+        </div>
+      </li>
       <li class="side-nav-title">Navegación Normal</li>
       <?php endif; ?>
       
